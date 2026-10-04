@@ -1,0 +1,1472 @@
+/*
+ * Стили острова. Всё под .illustrators и с префиксом il-, чтобы не задевать
+ * страницу Django. Токены сняты с alterlit.ru: фон страницы #FDF8EF, ссылки
+ * #203019, кнопки #E9AA44. Ethna и PT Serif подключает сам сайт.
+ */
+.illustrators {
+  --il-ink: #203019;
+  --il-moss: #245326;
+  --il-amber: #e9aa44;
+  --il-amber-deep: #b47a1c;
+  --il-like: #dfd9c2;
+  --il-like-mine: #d78778;
+  --il-comments-some: #95b4ca;
+  --il-muted: #6e6a5e;
+  --il-placeholder: #efe6d2;
+  --il-placeholder-shine: #f8f1e3;
+
+  /* Форма «реплики» из комментариев в сайдбаре: острый левый верхний угол. */
+  --il-shape: 0 14px 14px 14px;
+
+  --il-col-gap: clamp(12px, 2.2cqi, 24px);
+  --il-row-gap: clamp(20px, 3cqi, 36px);
+
+  container-type: inline-size;
+  box-sizing: border-box;
+  color: var(--il-ink);
+  font-family: "PT Serif", Georgia, serif;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.illustrators *,
+.illustrators *::before,
+.illustrators *::after {
+  box-sizing: inherit;
+}
+
+/*
+ * Защита от глобальных стилей сайта: legacy CSS alterlit.ru задаёт правила голым
+ * тегам — h1/h2 по центру и чёрным, main p с плотным line-height, ul li inline-block,
+ * fixed-позиционирование header/footer (поэтому их в острове нет вовсе).
+ * Сбрасываем то, что нас задевает; остальное перекрывают классы компонентов.
+ * Сброс ul не нужен (сайт сам обнуляет ul), а с классом острова он перебивал бы
+ * отступы компонентов вроде .il-replies.
+ */
+.illustrators h1,
+.illustrators h2 {
+  text-align: left;
+}
+
+.illustrators p {
+  line-height: inherit;
+}
+
+.illustrators li {
+  display: block;
+}
+
+/* Обёртка: на широком экране содержимое центрируется, по краям — воздух. */
+.il-wrap {
+  width: 100%;
+  max-width: 1040px;
+  margin-inline: auto;
+  padding: clamp(24px, 4cqi, 48px) clamp(16px, 4cqi, 40px) clamp(40px, 6cqi, 72px);
+}
+
+.il-title {
+  margin: 0 0 clamp(20px, 3.4cqi, 36px);
+  font-family: Ethna, "PT Serif", Georgia, serif;
+  font-size: clamp(30px, 2.6cqi + 18px, 46px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.03em;
+  color: var(--il-ink);
+}
+
+.il-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--il-row-gap) var(--il-col-gap);
+}
+
+.il-card {
+  min-width: 0;
+}
+
+/* Плитка с картинкой */
+.il-tile {
+  position: relative;
+  display: block;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border-radius: var(--il-shape);
+  background: var(--il-placeholder);
+  cursor: zoom-in;
+}
+
+.il-tile:focus-visible {
+  outline: 3px solid var(--il-amber);
+  outline-offset: 3px;
+}
+
+.il-picture,
+.il-picture img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Превью 60×60 — размываем, чтобы не было видно пикселей, и чуть увеличиваем,
+   чтобы размытые края не просвечивали. */
+.il-picture__preview {
+  filter: blur(14px) saturate(1.15);
+  transform: scale(1.15);
+}
+
+/* Оригинал «проявляется» поверх превью. */
+.il-picture__full {
+  opacity: 0;
+  filter: blur(8px);
+  transition:
+    opacity 0.6s ease-out,
+    filter 0.9s ease-out;
+}
+
+.il-picture[data-state="loaded"] .il-picture__full {
+  opacity: 1;
+  filter: none;
+}
+
+/* Подпись */
+.il-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  min-height: 28px;
+}
+
+.il-author {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.il-avatar {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.il-avatar--initial {
+  display: grid;
+  place-items: center;
+  background: var(--il-moss);
+  color: #fdf8ef;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.il-author__name {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Счётчики лайков и комментариев. Оба устроены одинаково: иконка + число одного
+ * размера и начертания. Они тише имени автора — справка, а не акцент; состояние
+ * («мой лайк», «есть комментарии») передаёт только цвет иконки.
+ * Размеры задаются переменными на .il-stats, чтобы диалог и узкая лента меняли
+ * их в одном месте.
+ */
+.il-stats {
+  --il-stat-icon: 18px;
+  --il-stat-text: 13px;
+
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 12px;
+  color: var(--il-muted);
+  font-size: var(--il-stat-text);
+  line-height: 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+.il-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.il-stat__icon {
+  display: block;
+  flex: none;
+  width: var(--il-stat-icon);
+  height: var(--il-stat-icon);
+  fill: var(--il-like);
+}
+
+/* Цифры PT Serif сидят чуть выше центра строки — опускаем на полпикселя. */
+.il-stat__value {
+  position: relative;
+  top: 0.04em;
+}
+
+.il-stat--likes[data-mine] .il-stat__icon {
+  fill: var(--il-like-mine);
+}
+
+.il-stat--comments[data-has] .il-stat__icon {
+  fill: var(--il-comments-some);
+}
+
+/* Сердечко — кнопка. Поле нажатия шире иконки, но на раскладку это не влияет. */
+.il-like {
+  margin: -6px;
+  padding: 6px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.il-like .il-stat__icon {
+  transition: fill 0.2s ease;
+  transform-origin: 50% 60%;
+}
+
+.il-like:hover .il-stat__icon {
+  fill: #cfc6a6;
+}
+
+.il-like[data-mine]:hover .il-stat__icon {
+  fill: #c9725f;
+}
+
+.il-like:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: 0;
+}
+
+/* Анимация только в ответ на нажатие: поставил — сердце «ёкает», снял — слегка сжимается. */
+.il-like[data-pulse="in"] .il-stat__icon {
+  animation: il-heart-in 0.42s cubic-bezier(0.3, 0, 0.3, 1.4);
+}
+
+.il-like[data-pulse="out"] .il-stat__icon {
+  animation: il-heart-out 0.24s ease-out;
+}
+
+@keyframes il-heart-in {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.82);
+  }
+  60% {
+    transform: scale(1.28);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes il-heart-out {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.82);
+  }
+}
+
+/* Скелетон повторяет карточку, чтобы при подгрузке ничего не прыгало. */
+.il-skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--il-placeholder) 30%,
+    var(--il-placeholder-shine) 50%,
+    var(--il-placeholder) 70%
+  );
+  background-size: 300% 100%;
+  animation: il-shimmer 1.6s linear infinite;
+}
+
+.il-skeleton__line {
+  display: block;
+  width: 7em;
+  max-width: 100%;
+  height: 0.8em;
+  border-radius: 0 6px 6px 6px;
+}
+
+.il-skeleton__line--stats {
+  width: 5.5em;
+}
+
+@keyframes il-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+/* Статусы: пусто, ошибка, конец ленты */
+.il-status {
+  margin: 0;
+  padding: clamp(32px, 6cqi, 56px) 0 0;
+  color: var(--il-muted);
+  text-align: center;
+}
+
+.il-status p {
+  margin: 0 0 16px;
+}
+
+.il-status--end {
+  padding-top: clamp(28px, 5cqi, 48px);
+  font-style: italic;
+}
+
+.il-button {
+  padding: 10px 22px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--il-amber);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.il-button:hover {
+  background: var(--il-amber-deep);
+}
+
+.il-button:focus-visible {
+  outline: 3px solid var(--il-ink);
+  outline-offset: 2px;
+}
+
+.il-sentinel {
+  height: 1px;
+}
+
+/* Диалог просмотра */
+
+/* Пока диалог открыт, страница под ним не прокручивается. */
+:root:has(.il-dialog[open]) {
+  overflow: hidden;
+}
+
+.il-dialog {
+  width: min(1240px, 100vw - 48px);
+  height: min(880px, 100dvh - 48px);
+  max-width: none;
+  max-height: none;
+  padding: 0;
+  border: 0;
+  border-radius: var(--il-shape);
+  background: #fdf8ef;
+  color: var(--il-ink);
+  overflow: hidden;
+}
+
+.il-dialog[open] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  animation: il-dialog-in 0.22s ease-out;
+}
+
+.il-dialog::backdrop {
+  background: rgb(18 28 14 / 0.82);
+  backdrop-filter: blur(3px);
+}
+
+@keyframes il-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.985);
+  }
+}
+
+/* Сцена: тёмно-зелёная, как шапка и сайдбар сайта, — картинка на ней читается лучше, чем на креме. */
+.il-stage {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  background: #1b2915 url("/assets/img/texture.jpg");
+}
+
+.il-picture--contain .il-picture__preview {
+  filter: blur(28px) saturate(1.1) brightness(0.8);
+  transform: scale(1.2);
+}
+
+.il-picture--contain .il-picture__full {
+  padding: clamp(12px, 2.5vw, 32px);
+  object-fit: contain;
+}
+
+/* Когда оригинал готов, размытое превью остаётся мягким фоном вокруг него. */
+.il-picture--contain[data-state="loaded"] .il-picture__preview {
+  opacity: 0.55;
+  transition: opacity 0.6s ease-out;
+}
+
+.il-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid #e8dfca;
+}
+
+.il-panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 16px 16px 24px;
+}
+
+.il-panel__author {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  color: var(--il-ink);
+  font-size: 17px;
+  text-decoration: none;
+}
+
+a.il-author {
+  color: var(--il-ink);
+  text-decoration: none;
+}
+
+a.il-author:hover .il-author__name,
+.il-panel__author:hover .il-author__name {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.il-avatar--large {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+
+.il-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--il-ink);
+  cursor: pointer;
+}
+
+.il-close:hover {
+  background: #efe6d2;
+}
+
+.il-close svg,
+.il-download svg,
+.il-icon-button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.il-panel__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 24px 20px;
+  border-bottom: 1px solid #e8dfca;
+}
+
+.il-panel__actions .il-stats {
+  --il-stat-icon: 24px;
+  --il-stat-text: 15px;
+  gap: 16px;
+}
+
+.il-comments__total {
+  margin-left: 10px;
+  color: var(--il-muted);
+  font-family: "PT Serif", Georgia, serif;
+  font-size: 17px;
+}
+
+.il-download {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--il-ink);
+  border-radius: 6px;
+  color: var(--il-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.il-download:hover {
+  background: var(--il-ink);
+  color: #fdf8ef;
+}
+
+.il-panel__buttons {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Квадратная кнопка-иконка — пара к «Скачать»: та же рамка и высота. */
+.il-icon-button {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--il-ink);
+  border-radius: 6px;
+  background: none;
+  color: var(--il-ink);
+  cursor: pointer;
+}
+
+.il-icon-button:hover {
+  background: var(--il-ink);
+  color: #fdf8ef;
+}
+
+.il-icon-button:focus-visible {
+  outline: 3px solid var(--il-amber);
+  outline-offset: 2px;
+}
+
+/* Просмотр во весь экран */
+.il-fullscreen {
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: #0f160c;
+  overflow: hidden;
+}
+
+.il-fullscreen::backdrop {
+  background: #0f160c;
+}
+
+/* Рамка, которую браузер разворачивает на весь экран. */
+.il-fullscreen__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #0f160c;
+}
+
+.il-fullscreen .il-picture--contain .il-picture__full {
+  padding: 0;
+}
+
+.il-fullscreen .il-picture--contain[data-state="loaded"] .il-picture__preview {
+  opacity: 0.35;
+}
+
+.il-fullscreen__close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 1;
+  width: 44px;
+  height: 44px;
+  background: rgb(253 248 239 / 0.9);
+}
+
+.il-fullscreen__close:hover {
+  background: #fdf8ef;
+}
+
+.il-comments {
+  flex: 1;
+  min-height: 0;
+  /* Верхний отступ — у заголовка: он липкий и должен закрывать собой листающийся список. */
+  padding: 0 24px 20px;
+  overflow-y: auto;
+}
+
+.il-comments__title {
+  /* Заголовок остаётся на месте, пока листаются комментарии. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 0 12px;
+  padding: 20px 0 10px;
+  background: #fdf8ef;
+  color: var(--il-ink);
+  font-family: Ethna, "PT Serif", Georgia, serif;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+}
+
+.il-comments__empty,
+.il-comments__guest {
+  margin: 0;
+  color: var(--il-muted);
+  font-style: italic;
+}
+
+.il-comments__guest {
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e8dfca;
+}
+
+.il-comment-form {
+  display: grid;
+  /* Без minmax колонка растягивалась бы по содержимому — строке ссылки с кнопками. */
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 16px 24px 24px;
+  border-top: 1px solid #e8dfca;
+}
+
+/* Список комментариев */
+.il-comment-list,
+.il-replies {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.il-comment-list {
+  display: grid;
+  gap: 18px;
+}
+
+.il-comment__inner {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: 10px;
+}
+
+.il-comment__avatar .il-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+.il-comment__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 8px;
+  row-gap: 2px;
+  line-height: 1.3;
+}
+
+.il-comment__author {
+  color: var(--il-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.il-comment__author:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.il-comment__date,
+.il-comment__edited {
+  color: var(--il-muted);
+  font-size: 13px;
+}
+
+.il-comment__edited {
+  font-style: italic;
+}
+
+.il-comment__text {
+  margin-top: 4px;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.il-comment__text p {
+  margin: 0;
+}
+
+.il-comment__text p + p {
+  margin-top: 0.4em;
+}
+
+.il-comment__text a {
+  color: var(--il-moss);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Упоминание (и старого редактора, и нового) — имя, а не адрес. */
+.il-comment__text a[href^="/profile/"] {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Видео YouTube из старых комментариев */
+.il-comment__text div:has(> iframe) {
+  margin-top: 8px;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--il-shape);
+  background: #1b2915;
+}
+
+.il-comment__text div:has(> iframe) iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.il-comment__images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.il-comment__image {
+  position: relative;
+  display: block;
+  width: 88px;
+  height: 88px;
+  overflow: hidden;
+  border-radius: var(--il-shape);
+  background: var(--il-placeholder);
+}
+
+.il-comment__image:focus-visible,
+.il-comment__author:focus-visible,
+.il-comment__text a:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: 2px;
+}
+
+.il-comment__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 14px;
+  row-gap: 4px;
+  margin-top: 6px;
+}
+
+.il-comment__action {
+  color: var(--il-muted);
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.il-comment__action:hover {
+  color: var(--il-moss);
+  text-decoration: underline;
+}
+
+.il-comment__action--danger,
+.il-comment__action--danger:hover {
+  color: #a2402c;
+}
+
+/* Сколько ещё можно править: тихо, рядом с кнопками */
+.il-comment__timer {
+  color: var(--il-muted);
+  white-space: nowrap;
+  cursor: help;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.il-comment__confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--il-ink);
+  font-size: 13px;
+}
+
+/* Отправляется: показан сразу, сервер ещё не подтвердил. */
+.il-comment__inner[data-pending] {
+  opacity: 0.6;
+}
+
+.il-comment__likes {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--il-muted);
+  font-size: 13px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.il-comment__likes svg {
+  width: 15px;
+  height: 15px;
+  fill: var(--il-like);
+}
+
+.il-comment__likes[data-mine] svg {
+  fill: var(--il-like-mine);
+}
+
+/* Ответы — с отступом и линией слева, как ветка разговора */
+.il-replies {
+  display: grid;
+  gap: 14px;
+  margin: 12px 0 0 42px;
+  padding-left: 12px;
+  border-left: 2px solid #e8dfca;
+}
+
+.il-comment--reply .il-comment__inner {
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.il-comment--reply .il-comment__avatar .il-avatar {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+}
+
+.il-text-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--il-moss);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.il-text-button:disabled {
+  color: var(--il-muted);
+  cursor: default;
+}
+
+.il-text-button:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: 2px;
+}
+
+.il-comments__earlier {
+  display: block;
+  margin: 0 auto 16px;
+}
+
+.il-comments__state {
+  color: var(--il-muted);
+}
+
+.il-comments__state p {
+  margin: 0 0 8px;
+}
+
+.il-skeleton__line--wide {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.il-comment--skeleton .il-avatar {
+  width: 32px;
+  height: 32px;
+}
+
+/* «Ответ для …» над полем */
+.il-reply-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 6px 6px 12px;
+  border-left: 3px solid var(--il-moss);
+  border-radius: 0 8px 8px 0;
+  background: #f3ecdd;
+  color: var(--il-ink);
+  font-size: 14px;
+}
+
+.il-reply-banner__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.il-reply-banner--edit {
+  border-left-color: var(--il-amber);
+}
+
+.il-reply-banner__timer {
+  flex: none;
+  cursor: help;
+  color: var(--il-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.il-reply-banner__cancel {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--il-ink);
+  cursor: pointer;
+}
+
+.il-reply-banner__cancel:hover {
+  background: #e8dfca;
+}
+
+.il-reply-banner__cancel svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+}
+
+.il-reply-banner__cancel:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: 1px;
+}
+
+/* Редактор комментария */
+.il-editor {
+  border: 1px solid #d9cfb8;
+  border-radius: var(--il-shape);
+  background: #fff;
+}
+
+.il-editor:focus-within {
+  border-color: var(--il-amber);
+  box-shadow: 0 0 0 1px var(--il-amber);
+}
+
+.il-editor__toolbar,
+.il-linkbar {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  min-height: 41px;
+  padding: 4px 6px;
+  border-bottom: 1px solid #efe6d2;
+}
+
+.il-tool {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  color: var(--il-ink);
+  cursor: pointer;
+}
+
+.il-tool:hover {
+  background: #f5efe2;
+}
+
+.il-tool[aria-pressed="true"] {
+  background: #efe6d2;
+}
+
+.il-tool:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.il-tool:disabled:hover {
+  background: none;
+}
+
+.il-tool:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: -2px;
+}
+
+.il-tool svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Кнопки форматирования — буквы самого PT Serif: Ж, К, Ч. */
+.il-tool__letter {
+  font-family: "PT Serif", Georgia, serif;
+  font-size: 17px;
+  line-height: 1;
+}
+
+.il-tool__letter--bold {
+  font-weight: 700;
+}
+
+.il-tool__letter--italic {
+  font-style: italic;
+}
+
+.il-tool__letter--underline {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.il-tool__sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 6px;
+  background: #e8dfca;
+}
+
+.il-linkbar {
+  gap: 6px;
+}
+
+.il-linkbar__input {
+  flex: 1;
+  min-width: 0;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid #e8dfca;
+  border-radius: 6px;
+  background: #fff;
+  color: var(--il-ink);
+  font: inherit;
+  font-size: 14px;
+}
+
+.il-linkbar__input:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: -1px;
+}
+
+.il-linkbar__input[aria-invalid] {
+  border-color: #c0533d;
+}
+
+.il-linkbar__action {
+  flex: none;
+  height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--il-ink);
+  color: #fdf8ef;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.il-linkbar__action--quiet {
+  background: none;
+  color: var(--il-ink);
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.il-editor__content {
+  min-height: 72px;
+  max-height: 200px;
+  padding: 10px 12px;
+  overflow-y: auto;
+  outline: none;
+  font-size: 15px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.il-editor__content p {
+  margin: 0;
+}
+
+.il-editor__content p + p {
+  margin-top: 0.5em;
+}
+
+.il-editor__content a {
+  color: var(--il-moss);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.il-editor__content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: var(--il-muted);
+  pointer-events: none;
+}
+
+/* Упоминание в тексте — ссылка на профиль, но выглядит как имя, а не как адрес. */
+.il-editor__content a[href^="/profile/"] {
+  color: var(--il-moss);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* Подсказки упоминаний */
+.il-mentions {
+  position: fixed;
+  z-index: 10;
+  max-height: 280px;
+  padding: 4px;
+  overflow-y: auto;
+  border: 1px solid #e8dfca;
+  border-radius: var(--il-shape);
+  background: #fdf8ef;
+  box-shadow: 0 8px 24px rgb(32 48 25 / 0.16);
+}
+
+.il-mentions__message {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--il-muted);
+  font-size: 14px;
+  font-style: italic;
+}
+
+.il-mentions__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--il-ink);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.il-mentions__item[aria-selected="true"] {
+  background: #efe6d2;
+}
+
+.il-mentions__avatar {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.il-mentions__avatar--initial {
+  display: grid;
+  place-items: center;
+  background: var(--il-moss);
+  color: #fdf8ef;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.il-mentions__name {
+  overflow: hidden;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.il-mentions__login {
+  flex: none;
+  margin-left: auto;
+  color: var(--il-muted);
+  font-size: 13px;
+}
+
+/* Прикреплённые картинки — до трёх в ряд */
+.il-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.il-attachment {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  overflow: hidden;
+  border-radius: var(--il-shape);
+  background: var(--il-placeholder);
+}
+
+.il-attachment__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.il-attachment__remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgb(253 248 239 / 0.92);
+  color: var(--il-ink);
+  cursor: pointer;
+}
+
+.il-attachment__remove svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.il-attachment__remove:focus-visible {
+  outline: 2px solid var(--il-amber);
+  outline-offset: 1px;
+}
+
+.il-comment-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.il-comment-form__error {
+  margin: 0;
+  color: #a2402c;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+/* Пока грузится бандл редактора — пустое место ровно под поле, без скачка. */
+.il-comment-form--loading {
+  min-height: 208px;
+}
+
+.il-comment-form .il-button {
+  flex: none;
+}
+
+.il-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.il-button:disabled:hover {
+  background: var(--il-amber);
+}
+
+a.il-author:focus-visible,
+.il-panel__author:focus-visible,
+.il-close:focus-visible,
+.il-download:focus-visible {
+  outline: 3px solid var(--il-amber);
+  outline-offset: 2px;
+}
+
+.il-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Телефоны и узкие планшеты: диалог во весь экран, картинка сверху, панель под ней. */
+@media (max-width: 760px) {
+  .il-dialog {
+    width: 100vw;
+    height: 100dvh;
+    border-radius: 0;
+    overflow-y: auto;
+  }
+  .il-dialog[open] {
+    display: flex;
+    flex-direction: column;
+  }
+  /* Сцена принимает пропорции картинки, чтобы широкая не тонула в зелёном поле. */
+  .il-stage {
+    flex: none;
+    width: 100%;
+    aspect-ratio: var(--il-ratio, 1);
+    min-height: 220px;
+    max-height: 72dvh;
+  }
+  .il-picture--contain .il-picture__full {
+    padding: 0;
+  }
+  .il-panel {
+    flex: 1 0 auto;
+    border-left: 0;
+  }
+  .il-panel__head {
+    padding: 16px 12px 12px 16px;
+  }
+  .il-panel__actions,
+  .il-comments,
+  .il-comment-form,
+  .il-comments__guest {
+    padding-inline: 16px;
+  }
+  .il-comments {
+    overflow: visible;
+  }
+  .il-comments {
+    padding-top: 20px;
+  }
+  .il-comments__title {
+    position: static;
+    padding: 0;
+  }
+  /* Крестик закреплён в углу, чтобы закрыть можно было и не долистав до панели. */
+  .il-close {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    background: rgb(253 248 239 / 0.92);
+  }
+  .il-close:hover {
+    background: #fdf8ef;
+  }
+}
+
+/* Окно-предупреждение */
+.il-notice {
+  width: min(400px, 100vw - 32px);
+  padding: 28px 28px 24px;
+  border: 0;
+  border-radius: var(--il-shape);
+  background: #fdf8ef;
+  color: var(--il-ink);
+  text-align: center;
+}
+
+.il-notice[open] {
+  animation: il-dialog-in 0.2s ease-out;
+}
+
+.il-notice::backdrop {
+  background: rgb(18 28 14 / 0.6);
+}
+
+.il-notice__icon {
+  display: block;
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 14px;
+  fill: var(--il-like-mine);
+}
+
+.il-notice__text {
+  margin: 0 0 20px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+/* Узкая колонка (телефон, или сайт ужал main): три колонки превращаются в
+   спичечные коробки, поэтому переходим на две. */
+@container (max-width: 520px) {
+  .il-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Имя автора — своей строкой, счётчики под ним: иначе имя режется до пары букв. */
+  .il-caption {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    margin-top: 8px;
+  }
+  .il-caption .il-author {
+    flex-basis: 100%;
+  }
+  .il-caption .il-author {
+    gap: 6px;
+  }
+  .il-caption .il-avatar {
+    width: 20px;
+    height: 20px;
+  }
+  .il-caption .il-author__name {
+    font-size: 14px;
+  }
+  .il-caption .il-stats {
+    --il-stat-icon: 16px;
+    gap: 10px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .il-skeleton {
+    animation: none;
+  }
+  .il-picture__full,
+  .il-picture--contain[data-state="loaded"] .il-picture__preview {
+    transition: none;
+  }
+  .il-dialog[open],
+  .il-notice[open],
+  .il-like[data-pulse] .il-stat__icon {
+    animation: none;
+  }
+  .il-like .il-stat__icon {
+    transition: none;
+  }
+}

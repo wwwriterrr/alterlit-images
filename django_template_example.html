@@ -1,0 +1,33 @@
+{# Пример подключения острова на странице /images/illustrators/. #}
+{# IMAGES_LIST_VERSION — любая строка, меняющаяся при деплое (хэш коммита, дата сборки). #}
+
+<link rel="stylesheet" href="/assets/images_list/images_list.css?v={{ IMAGES_LIST_VERSION }}">
+
+<div id="alterlit-illustrators"></div>
+
+{# type="module" обязателен: остальные бандлы (vendor.js, editor.js) приложение #}
+{# подгружает само через import. Модули и так выполняются после разбора страницы, #}
+{# defer не нужен. #}
+<script type="module" src="/assets/images_list/images_list.js?v={{ IMAGES_LIST_VERSION }}"></script>
+
+{#
+  Что лежит в dist/ после `npm run build` — имена постоянные, без хэшей:
+    images_list.css       стили, подключаются в шаблоне
+    images_list.js        точка входа, подключается в шаблоне
+    vendor.js             React, Redux — грузит images_list.js
+    rolldown-runtime.js   служебный код сборщика — грузит images_list.js
+    editor.js             редактор комментариев — грузится только для вошедших,
+                          когда понадобится
+
+  Кэш: в шаблоне меняется только ?v= у двух подключаемых файлов. Импорты между
+  бандлами сборка сама помечает ?v=<хэш сборки>, так что после деплоя браузер
+  не возьмёт старые vendor.js и editor.js из кэша.
+
+  Деплой:
+    npm run build
+    rsync -a --delete dist/ <project>/static/images_list/
+    ./manage.py collectstatic
+
+  Другой префикс статики — соберите с ним:
+    STATIC_BASE=/s/images_list/ npm run build
+#}
