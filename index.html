@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Иллюстрации — Alterlit</title>
+    <!--
+      Только для разработки: грубо повторяет страницу alterlit.ru — шрифты, фон,
+      колонку main и зелёный сайдбар, — чтобы видеть остров в окружении сайта.
+      В проде всё это даёт Django-шаблон, см. django_template_example.html.
+    -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=PT+Serif:ital,wght@0,400;0,700;1,400;1,700&display=swap" />
+    <style>
+      @font-face { font-family: Ethna; src: url("/assets/fonts/ethna_demo.otf") format("opentype"); }
+      body { margin: 0; background: #fdf8ef; font: 14px "PT Serif", Helvetica, sans-serif; }
+      .dev-page { display: flex; min-height: 100vh; }
+      .dev-left { flex: 1; min-width: 0; }
+      .dev-header, .dev-side { background: #203019 url("/assets/img/texture.jpg"); }
+      .dev-header { height: 86px; }
+      .dev-side { width: 350px; flex: none; }
+      @media (max-width: 1000px) { .dev-side { display: none; } .dev-header { height: 50px; } }
+    </style>
+  </head>
+  <body>
+    <div class="dev-page">
+      <div class="dev-left">
+        <header class="dev-header"></header>
+        <main id="alterlit">
+          <div id="alterlit-illustrators"></div>
+        </main>
+      </div>
+      <aside class="dev-side"></aside>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
