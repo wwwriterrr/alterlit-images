@@ -61,6 +61,22 @@ export const commentsApi = baseApi.injectEndpoints({
       transformResponse: (response: { success: boolean; comment: ApiComment }) => response.comment,
     }),
 
+    /**
+     * Жалоба: POST /support/task/session/ в multipart (JSON ручка не принимает).
+     * Поля: content_type=comment, object_id, text; гостю обязателен email.
+     * Ответ 200 { msg: "ok", id: <object_id> }. Бэк поля не проверяет — проверяем мы.
+     */
+    reportComment: build.mutation<void, { commentId: number; text: string; email: string | null }>({
+      query: ({ commentId, text, email }) => {
+        const body = new FormData();
+        body.append("content_type", "comment");
+        body.append("object_id", String(commentId));
+        body.append("text", text);
+        if (email !== null) body.append("email", email);
+        return { url: "support/task/session/", method: "POST", body };
+      },
+    }),
+
     /** DELETE /comment/<id>/session/ → { msg: "ok" }. В сокет приходит remove_comment. */
     deleteComment: build.mutation<void, number>({
       query: (commentId) => ({ url: `comment/${commentId}/session/`, method: "DELETE" }),

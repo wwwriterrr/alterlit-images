@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { EditorContent, useEditor, useEditorState, type Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import type { EditorView } from "@tiptap/pm/view";
 import Document from "@tiptap/extension-document";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -17,12 +18,6 @@ import { profileUrl, searchUsers, type MentionUser } from "./mentions";
 interface Props {
   /** Пользователь вставил или перетащил в поле картинки. */
   onImages: (files: File[]) => void;
-  /** Нажата кнопка «прикрепить картинки». */
-  onAttachClick: () => void;
-  /** Можно ли прикрепить ещё — иначе кнопка неактивна. */
-  canAttach: boolean;
-  /** Подсказка к кнопке прикрепления. */
-  attachLabel: string;
   onReady: (editor: Editor) => void;
   /** Ctrl/Cmd+Enter — отправить. */
   onSubmitShortcut?: () => void;
@@ -40,7 +35,7 @@ interface Range {
   to: number;
 }
 
-export function CommentEditor({ onImages, onAttachClick, canAttach, attachLabel, onReady, onSubmitShortcut }: Props) {
+export function CommentEditor({ onImages, onReady, onSubmitShortcut }: Props) {
   // Выделение запоминаем в момент открытия строки ссылки: пока фокус в поле
   // адреса, выделение в редакторе браузер теряет или сдвигает.
   const [linkRange, setLinkRange] = useState<Range | null>(null);
@@ -52,11 +47,19 @@ export function CommentEditor({ onImages, onAttachClick, canAttach, attachLabel,
   onImagesRef.current = onImages;
   const onSubmitRef = useRef(onSubmitShortcut);
   onSubmitRef.current = onSubmitShortcut;
+  // Всплывающее меню решает, показываться ли, вне React — читаем из ref.
+  const linkOpenRef = useRef(false);
   const openLink = (range: Range) => {
-    // Догоняем состояние редактора до реального выделения: по нему строка
-    // ссылки узнаёт текущий адрес и показывает «Убрать».
-    editorRef.current?.commands.setTextSelection(range);
+    linkOpenRef.current = true;
     setLinkRange(range);
+    // Догоняем состояние редактора до реального выделения: по нему строка
+    // ссылки узнаёт текущий адрес и показывает «Убрать». Эта же транзакция
+    // заставляет всплывающее меню пересчитать, показываться ли.
+    editorRef.current?.commands.setTextSelection(range);
+  };
+  const closeLink = () => {
+    linkOpenRef.current = false;
+    setLinkRange(null);
   };
   const openLinkRef = useRef(openLink);
 
@@ -116,7 +119,7 @@ export function CommentEditor({ onImages, onAttachClick, canAttach, attachLabel,
         // Только веб-ссылки и почта: никаких javascript: и прочих схем.
         isAllowedUri: (url, { defaultValidate }) => /^(https?:\/\/|mailto:)/i.test(url) && Boolean(defaultValidate(url)),
       }),
-      Placeholder.configure({ placeholder: "Ваш комментарий" }),
+      Placeholder.configure({ placeholder: "Комментарий" }),
       UndoRedo,
       Mention.extend({
         // При правке комментария загружаем его HTML: ссылки на профили — это упоминания
@@ -265,38 +268,42 @@ export function CommentEditor({ onImages, onAttachClick, canAttach, attachLabel,
 
   return (
     <div ref={boxRef} className="il-editor">
-      {linkRange ? (
-        <LinkBar editor={editor} range={linkRange} onDone={() => setLinkRange(null)} />
-      ) : (
-        <div className="il-editor__toolbar" role="toolbar" aria-label="Форматирование">
-          <ToolButton label="Жирный (Ctrl+B)" active={state?.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
-            <span className="il-tool__letter il-tool__letter--bold">Ж</span>
-          </ToolButton>
-          <ToolButton label="Курсив (Ctrl+I)" active={state?.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
-            <span className="il-tool__letter il-tool__letter--italic">К</span>
-          </ToolButton>
-          <ToolButton label="Подчёркнутый (Ctrl+U)" active={state?.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
-            <span className="il-tool__letter il-tool__letter--underline">Ч</span>
-          </ToolButton>
-          <ToolButton
-            label="Ссылка (Ctrl+K)"
-            active={state?.link}
-            onClick={() => openLink(currentRange(editor.view))}
-          >
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1" />
-            </svg>
-          </ToolButton>
-          <span className="il-tool__sep" aria-hidden="true" />
-          <ToolButton label={attachLabel} disabled={!canAttach} onClick={onAttachClick}>
-            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-              <rect x="3.5" y="4.5" width="17" height="15" rx="2" />
-              <circle cx="9" cy="10" r="1.6" />
-              <path d="M4 17l5-4.5 4 3.5 2.5-2 4.5 3.5" />
-            </svg>
-          </ToolButton>
-        </div>
-      )}
+      {/*
+        Форматирование всплывает над выделенным текстом — поле при этом выглядит как
+        простое поле комментария сайта. Меню кладём внутрь поля, а не в body: диалог
+        открыт в верхнем слое (showModal), и всё, что в body, оказалось бы под ним.
+      */}
+      <BubbleMenu
+        editor={editor}
+        className="il-bubble"
+        updateDelay={0}
+        appendTo={() => boxRef.current ?? document.body}
+        // absolute от самого поля: у корня острова container-type (для колонок ленты),
+        // он становится опорным блоком для position: fixed, и fixed-координаты съезжают.
+        options={{ strategy: "absolute", placement: "top", offset: 8, flip: true, shift: { padding: 8 } }}
+        shouldShow={({ editor: e, state }) => linkOpenRef.current || (e.isFocused && !state.selection.empty)}
+      >
+        {linkRange ? (
+          <LinkBar editor={editor} range={linkRange} onDone={closeLink} />
+        ) : (
+          <div className="il-bubble__tools" role="toolbar" aria-label="Форматирование">
+            <ToolButton label="Жирный (Ctrl+B)" active={state?.bold} onClick={() => editor.chain().focus().toggleBold().run()}>
+              <span className="il-tool__letter il-tool__letter--bold">Ж</span>
+            </ToolButton>
+            <ToolButton label="Курсив (Ctrl+I)" active={state?.italic} onClick={() => editor.chain().focus().toggleItalic().run()}>
+              <span className="il-tool__letter il-tool__letter--italic">К</span>
+            </ToolButton>
+            <ToolButton label="Подчёркнутый (Ctrl+U)" active={state?.underline} onClick={() => editor.chain().focus().toggleUnderline().run()}>
+              <span className="il-tool__letter il-tool__letter--underline">Ч</span>
+            </ToolButton>
+            <ToolButton label="Ссылка (Ctrl+K)" active={state?.link} onClick={() => openLink(currentRange(editor.view))}>
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <path d="M10 14a4.5 4.5 0 0 0 6.4 0l3-3a4.5 4.5 0 0 0-6.4-6.4l-1 1M14 10a4.5 4.5 0 0 0-6.4 0l-3 3a4.5 4.5 0 0 0 6.4 6.4l1-1" />
+              </svg>
+            </ToolButton>
+          </div>
+        )}
+      </BubbleMenu>
       <EditorContent editor={editor} />
       {mention && (
         <MentionList
@@ -456,6 +463,21 @@ function ToolButton({
 
 /** Строка ввода адреса ссылки, встаёт на место тулбара. */
 function LinkBar({ editor, range, onDone }: { editor: Editor; range: Range; onDone: () => void }) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const barRef = useRef<HTMLDivElement>(null);
+
+  // Меню появляется не сразу, а невидимое поле фокус не принимает — пробуем,
+  // пока поле не станет видимым (обычно с первого-второго кадра).
+  useEffect(() => {
+    let tries = 0;
+    const timer = setInterval(() => {
+      const input = inputRef.current;
+      if (input) input.focus();
+      if (document.activeElement === input || ++tries > 20) clearInterval(timer);
+    }, 25);
+    return () => clearInterval(timer);
+  }, []);
+
   const current = (editor.getAttributes("link").href as string | undefined) ?? "";
   const onLink = editor.isActive("link");
   const [value, setValue] = useState(current);
@@ -503,8 +525,18 @@ function LinkBar({ editor, range, onDone }: { editor: Editor; range: Range; onDo
   };
 
   return (
-    <div className="il-linkbar">
+    <div
+      ref={barRef}
+      className="il-linkbar"
+      // Фокус ушёл и из строки ссылки, и из поля комментария — закрываем без изменений.
+      onBlur={(event) => {
+        const next = event.relatedTarget as Node | null;
+        if (next && (barRef.current?.contains(next) || editor.view.dom.contains(next))) return;
+        onDone();
+      }}
+    >
       <input
+        ref={inputRef}
         className="il-linkbar__input"
         type="url"
         inputMode="url"
@@ -512,7 +544,6 @@ function LinkBar({ editor, range, onDone }: { editor: Editor; range: Range; onDo
         aria-label="Адрес ссылки"
         aria-invalid={invalid || undefined}
         value={value}
-        autoFocus
         onChange={(event) => {
           setValue(event.target.value);
           setInvalid(false);

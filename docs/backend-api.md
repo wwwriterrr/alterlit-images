@@ -130,6 +130,19 @@ Reply = Comment без reply, плюс on_comment: number (id родителя)
   legacy JSON (`images` — список id). Ответ `{"success": true, "comment": Comment}`.
   Права: автор в течение 5 минут или модератор (`blog.add_post`).
 
+## POST /api/v1/support/task/session/  (жалоба, проверено 2026-10-05)
+
+- Принимает только `multipart/form-data` или `application/x-www-form-urlencoded` (JSON → 415).
+- Поля: `content_type=comment`, `object_id` — id комментария, `text` — текст жалобы.
+  Гостю обязателен `email` (вошедшему — не нужен).
+- Ответ **200** `{"msg":"ok","id": <object_id>}` — в `id` id комментария, а не задачи.
+- ⚠️ Проверок нет: пустой `text` и неправильный `email` принимаются и создают задачу —
+  фронт проверяет сам. Отсутствующее поле → **500** `{"detail":"Error: 'text'"}`;
+  неизвестный `content_type` → 500 «ContentType matching query does not exist».
+- ⚠️ Гость без `email` → **500** `Cannot assign AnonymousUser: "SupportTask.from_user" must be a "User" instance`.
+- При проверке 2026-10-05 случайно созданы две лишние задачи поддержки на комментарий 1968796
+  (вошедший с пустым текстом; гость с text=x и email=not-an-email) — удалить в админке.
+
 ## WebSocket wss://alterlit.ru/ws/comments/postimages/<image_id>/  (проверено 2026-10-03)
 
 Живые события по комментариям картинки: новые, изменённые, удалённые.

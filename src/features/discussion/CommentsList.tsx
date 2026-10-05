@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
 import { useGetCommentsInfiniteQuery } from "../../api/commentsApi";
 import type { ApiReply, ApiUser } from "../../types/api";
-import { useAppDispatch } from "../../app/hooks";
-import { editStarted, noticeShown, type ReplyTarget } from "../viewer/viewerSlice";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
+import { editStarted, noticeShown, replyCancelled, reportStarted, type ReplyTarget } from "../viewer/viewerSlice";
 import { commentRights } from "./editWindow";
 import { deleteComment } from "./deleteComment";
 import { CommentItem } from "./CommentItem";
@@ -23,6 +23,9 @@ interface Props {
 export function CommentsList({ imageId, viewer, onReply, scrollRef }: Props) {
   const dispatch = useAppDispatch();
   const viewerId = viewer?.id ?? null;
+  const replyTo = useAppSelector((state) => state.viewer.replyTo);
+  const editingId = useAppSelector((state) => state.viewer.editing?.commentId ?? null);
+  const onCancelReply = () => dispatch(replyCancelled());
   const rightsFor = (comment: ApiReply) => commentRights(comment, viewer);
   const onEdit = (comment: ApiReply, deadline: number | null) =>
     dispatch(editStarted({ commentId: comment.id, html: comment.content ?? "", images: comment.images, deadline }));
@@ -141,12 +144,24 @@ export function CommentsList({ imageId, viewer, onReply, scrollRef }: Props) {
             ? "Загружаем…"
             : isFetchNextPageError
               ? "Не удалось загрузить. Попробовать ещё раз"
-              : "Показать более ранние комментарии"}
+              : "Предыдущие комментарии"}
         </button>
       )}
       <ul className="il-comment-list">
         {comments.map((comment) => (
-          <CommentItem key={comment.id} comment={comment} viewerId={viewerId} onReply={onReply} rightsFor={rightsFor} onDelete={onDelete} onEdit={onEdit} />
+          <CommentItem
+            key={comment.id}
+            comment={comment}
+            viewerId={viewerId}
+            onReply={onReply}
+            onCancelReply={onCancelReply}
+            replyTo={replyTo}
+            editingId={editingId}
+            rightsFor={rightsFor}
+            onDelete={onDelete}
+            onEdit={onEdit}
+            onReport={(id) => dispatch(reportStarted(id))}
+          />
         ))}
       </ul>
     </>

@@ -3,6 +3,7 @@ import type { ApiImage, ApiUser } from "../../types/api";
 import { Avatar, CommentsCount, LikeButton, ProgressiveImage, authorName, profileUrl } from "../feed/parts";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { CommentsList } from "../discussion/CommentsList";
+import { ReportDialog } from "../discussion/ReportDialog";
 import { editComment } from "../discussion/editComment";
 import { sendComment, sendErrorMessage } from "../discussion/sendComment";
 import { editCancelled, replyCancelled, replyStarted } from "./viewerSlice";
@@ -182,6 +183,8 @@ function DialogContent({
           <p className="il-comments__guest">Войдите на сайт, чтобы оставить комментарий.</p>
         )}
       </div>
+
+      <ReportDialog viewer={viewer} />
 
       {fullscreen && (
         <FullscreenViewer preview={image.preview} full={image.url} alt={alt} onClose={() => setFullscreen(false)} />

@@ -204,18 +204,52 @@ export function CommentForm({ onSubmit, replyTo = null, onCancelReply, editing =
           </div>
         )
       )}
-      <CommentEditor
-        onSubmitShortcut={() => void submitRef.current()}
-        onReady={setEditor}
-        onImages={attach}
-        canAttach={images.length < MAX_IMAGES}
-        attachLabel={
-          images.length < MAX_IMAGES
-            ? `Прикрепить картинки — до ${MAX_IMAGES}`
-            : `Прикреплено ${MAX_IMAGES} картинки — больше нельзя`
-        }
-        onAttachClick={() => fileRef.current?.click()}
-      />
+      {/* Как форма комментариев сайта: кнопка картинок, поле, круглая кнопка отправки. */}
+      <div className="il-compose">
+        {images.length > 0 && (
+          <ul className="il-attachments" aria-label="Прикреплённые картинки">
+            {images.map((item) => (
+              <li key={item.key}>
+                {item.kind === "new" ? (
+                  <FileAttachment file={item.file} onRemove={() => remove(item.key)} />
+                ) : (
+                  <AttachmentView src={item.url} alt="Прикреплённая картинка" onRemove={() => remove(item.key)} />
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+        <button
+          className="il-compose__btn il-compose__attach"
+          type="button"
+          disabled={images.length >= MAX_IMAGES}
+          onClick={() => fileRef.current?.click()}
+          title={images.length < MAX_IMAGES ? `Прикрепить картинки — до ${MAX_IMAGES}` : `Прикреплено ${MAX_IMAGES} картинки — больше нельзя`}
+          aria-label={images.length < MAX_IMAGES ? "Прикрепить картинки" : "Прикреплено максимум картинок"}
+        >
+          {/* Картинка — к комментарию прикрепляются только изображения. */}
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path
+              d="M19 5v14H5V5h14m0-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4.86 8.86-3 3.87L9 13.14 6 17h12l-3.86-5.14z"
+              fill="currentColor"
+            />
+          </svg>
+        </button>
+        <div className="il-compose__area">
+          <CommentEditor onSubmitShortcut={() => void submitRef.current()} onReady={setEditor} onImages={attach} />
+        </div>
+        <button
+          className="il-compose__btn il-compose__submit"
+          type="submit"
+          disabled={!canSend}
+          title={editing ? "Сохранить (Ctrl+Enter)" : "Отправить (Ctrl+Enter)"}
+          aria-label={editing ? (sending ? "Сохраняем" : "Сохранить") : sending ? "Отправляем" : "Отправить"}
+        >
+          <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+            <path d="M1 21V3L23 12L1 21ZM3.31579 17.625L17.0368 12L3.31579 6.375V10.3125L10.2632 12L3.31579 13.6875V17.625Z" fill="#fff" />
+          </svg>
+        </button>
+      </div>
       <input
         ref={fileRef}
         className="il-visually-hidden"
@@ -232,32 +266,11 @@ export function CommentForm({ onSubmit, replyTo = null, onCancelReply, editing =
         }}
       />
 
-      {images.length > 0 && (
-        <ul className="il-attachments" aria-label="Прикреплённые картинки">
-          {images.map((item) => (
-            <li key={item.key}>
-              {item.kind === "new" ? (
-                <FileAttachment file={item.file} onRemove={() => remove(item.key)} />
-              ) : (
-                <AttachmentView src={item.url} alt="Прикреплённая картинка" onRemove={() => remove(item.key)} />
-              )}
-            </li>
-          ))}
-        </ul>
+      {error && (
+        <p className="il-comment-form__error" role="alert">
+          {error}
+        </p>
       )}
-
-      <div className="il-comment-form__footer">
-        {error ? (
-          <p className="il-comment-form__error" role="alert">
-            {error}
-          </p>
-        ) : (
-          <span />
-        )}
-        <button className="il-button" type="submit" disabled={!canSend} title={editing ? "Сохранить (Ctrl+Enter)" : "Отправить (Ctrl+Enter)"}>
-          {editing ? (sending ? "Сохраняем…" : "Сохранить") : "Отправить"}
-        </button>
-      </div>
     </form>
   );
 }

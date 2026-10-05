@@ -1,25 +1,21 @@
-const MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+const DATE_FORMAT = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+});
 
 /**
- * Дата комментария. Бэк отдаёт время без часового пояса («2026-09-16T19:28:08.266706»),
- * поэтому показываем его как есть, ничего не пересчитывая.
+ * Дата комментария в том же виде, что в комментариях сайта: «05 окт. 2026 г., 15:40».
+ * Бэк отдаёт московское время без пояса — показываем его как есть, без пересчёта:
+ * собираем дату из частей и форматируем в местном времени, части не меняются.
  */
-export function formatCommentDate(dt: string, now = new Date()): string {
+export function formatCommentDate(dt: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(dt);
   if (!match) return dt;
   const [, y, m, d, hh, mm] = match;
-  const year = Number(y);
-  const month = Number(m) - 1;
-  const day = Number(d);
-  const time = `${hh}:${mm}`;
-
-  const date = new Date(year, month, day);
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDays = Math.round((today.getTime() - date.getTime()) / 86_400_000);
-  if (diffDays === 0) return `сегодня в ${time}`;
-  if (diffDays === 1) return `вчера в ${time}`;
-  if (year === now.getFullYear()) return `${day} ${MONTHS[month]} в ${time}`;
-  return `${day} ${MONTHS[month]} ${year}`;
+  return DATE_FORMAT.format(new Date(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm)));
 }
 
 /** Русское склонение по числу: [один, два-четыре, пять и больше]. */

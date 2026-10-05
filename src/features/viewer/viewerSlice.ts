@@ -2,7 +2,10 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 /** На какой комментарий отвечаем: id верхнего комментария ветки и кого упомянуть. */
 export interface ReplyTarget {
+  /** id верхнего комментария ветки — он уходит в reply_to. */
   commentId: number;
+  /** id комментария, у которого нажали «Ответить» (может быть ответом в ветке). */
+  sourceId: number;
   username: string;
   name: string;
 }
@@ -23,9 +26,11 @@ interface ViewerState {
   notice: string | null;
   replyTo: ReplyTarget | null;
   editing: EditTarget | null;
+  /** id комментария, на который открыто окно жалобы. */
+  reportingId: number | null;
 }
 
-const initialState: ViewerState = { openImageId: null, notice: null, replyTo: null, editing: null };
+const initialState: ViewerState = { openImageId: null, notice: null, replyTo: null, editing: null, reportingId: null };
 
 const viewerSlice = createSlice({
   name: "viewer",
@@ -35,11 +40,13 @@ const viewerSlice = createSlice({
       state.openImageId = action.payload;
       state.replyTo = null;
       state.editing = null;
+      state.reportingId = null;
     },
     imageClosed(state) {
       state.openImageId = null;
       state.replyTo = null;
       state.editing = null;
+      state.reportingId = null;
     },
     replyStarted(state, action: PayloadAction<ReplyTarget>) {
       state.replyTo = action.payload;
@@ -51,6 +58,12 @@ const viewerSlice = createSlice({
     },
     editCancelled(state) {
       state.editing = null;
+    },
+    reportStarted(state, action: PayloadAction<number>) {
+      state.reportingId = action.payload;
+    },
+    reportClosed(state) {
+      state.reportingId = null;
     },
     replyCancelled(state) {
       state.replyTo = null;
@@ -64,5 +77,5 @@ const viewerSlice = createSlice({
   },
 });
 
-export const { imageOpened, imageClosed, replyStarted, replyCancelled, editStarted, editCancelled, noticeShown, noticeClosed } = viewerSlice.actions;
+export const { imageOpened, imageClosed, replyStarted, replyCancelled, editStarted, editCancelled, reportStarted, reportClosed, noticeShown, noticeClosed } = viewerSlice.actions;
 export default viewerSlice.reducer;

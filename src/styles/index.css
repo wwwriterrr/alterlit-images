@@ -11,6 +11,8 @@
   --il-like: #dfd9c2;
   --il-like-mine: #d78778;
   --il-comments-some: #95b4ca;
+  /* Ссылки в комментариях сайта (--link-color у острова комментариев) */
+  --il-link: #0079f0;
   --il-muted: #6e6a5e;
   --il-placeholder: #efe6d2;
   --il-placeholder-shine: #f8f1e3;
@@ -641,8 +643,13 @@ a.il-author:hover .il-author__name,
 }
 
 .il-comments__guest {
-  padding: 16px 24px 24px;
-  border-top: 1px solid #e8dfca;
+  margin: 16px 24px 24px;
+  padding: 14px 20px;
+  border-radius: 8px;
+  background-color: #f0e5d2;
+  color: #000;
+  font-style: normal;
+  opacity: 1;
 }
 
 .il-comment-form {
@@ -654,7 +661,11 @@ a.il-author:hover .il-author__name,
   border-top: 1px solid #e8dfca;
 }
 
-/* Список комментариев */
+/*
+ * Список комментариев — как у комментариев на страницах текстов сайта
+ * (/assets/comments/comments.min.css). Панель диалога узкая, поэтому размеры —
+ * из мобильной версии сайта: аватар 40/30 px, отступ ответов 56 px, текст 14 px.
+ */
 .il-comment-list,
 .il-replies {
   margin: 0;
@@ -664,32 +675,63 @@ a.il-author:hover .il-author__name,
 
 .il-comment-list {
   display: grid;
-  gap: 18px;
+  gap: 32px;
 }
 
 .il-comment__inner {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  gap: 10px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 0 16px;
+  /* Подсветка, как у сайта для выбранного комментария (на него отвечают или его правят). */
+  border-radius: 10px;
+  transition: background-color 0.2s, outline-color 0.2s;
+  outline: 5px solid transparent;
+}
+
+.il-comment__inner[data-active] {
+  background-color: #ffecca;
+  outline-color: #ffecca;
+}
+
+.il-comment__avatar {
+  display: block;
+  width: 40px;
+  height: 40px;
+  overflow: hidden;
+  border-radius: 50%;
 }
 
 .il-comment__avatar .il-avatar {
-  width: 32px;
-  height: 32px;
+  width: 100%;
+  height: 100%;
+}
+
+.il-comment__main {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .il-comment__head {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 8px;
+  column-gap: 12px;
   row-gap: 2px;
   line-height: 1.3;
 }
 
 .il-comment__author {
-  color: var(--il-ink);
+  max-width: 100%;
+  overflow: hidden;
+  color: #000;
+  font-size: 15px;
   font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   text-decoration: none;
 }
 
@@ -698,41 +740,31 @@ a.il-author:hover .il-author__name,
   text-underline-offset: 3px;
 }
 
-.il-comment__date,
-.il-comment__edited {
-  color: var(--il-muted);
+.il-comment__date {
+  color: #000;
   font-size: 13px;
-}
-
-.il-comment__edited {
-  font-style: italic;
+  opacity: 0.5;
 }
 
 .il-comment__text {
-  margin-top: 4px;
-  font-size: 15px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
+  max-width: 100%;
+  color: #000;
+  font-size: 14px;
+  line-height: 1.3;
 }
 
 .il-comment__text p {
+  margin: 0 0 10px;
+}
+
+.il-comment__text p:last-child {
   margin: 0;
 }
 
-.il-comment__text p + p {
-  margin-top: 0.4em;
-}
-
+/* Ссылки и упоминания — как на сайте: синие и подчёркнутые. */
 .il-comment__text a {
-  color: var(--il-moss);
+  color: var(--il-link);
   text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-/* Упоминание (и старого редактора, и нового) — имя, а не адрес. */
-.il-comment__text a[href^="/profile/"] {
-  font-weight: 700;
-  text-decoration: none;
 }
 
 /* Видео YouTube из старых комментариев */
@@ -740,7 +772,7 @@ a.il-author:hover .il-author__name,
   margin-top: 8px;
   aspect-ratio: 16 / 9;
   overflow: hidden;
-  border-radius: var(--il-shape);
+  border-radius: 10px;
   background: #1b2915;
 }
 
@@ -751,93 +783,48 @@ a.il-author:hover .il-author__name,
   border: 0;
 }
 
+/* Картинки в комментарии — высотой 140 px, ширина по пропорциям, как на сайте. */
 .il-comment__images {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
-  margin: 8px 0 0;
-  padding: 0;
-  list-style: none;
+  gap: 10px;
+  max-width: 100%;
 }
 
 .il-comment__image {
-  position: relative;
   display: block;
-  width: 88px;
-  height: 88px;
-  overflow: hidden;
-  border-radius: var(--il-shape);
-  background: var(--il-placeholder);
+  max-width: 100%;
+  height: 140px;
+  background-color: #e3e3e3;
 }
 
-.il-comment__image:focus-visible,
-.il-comment__author:focus-visible,
-.il-comment__text a:focus-visible {
-  outline: 2px solid var(--il-amber);
-  outline-offset: 2px;
+.il-comment__image img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  min-width: 60px;
+  height: 100%;
+  object-fit: cover;
 }
 
-.il-comment__foot {
+/* Строка действий: сердечко со счётчиком и иконки без подписей. */
+.il-comment__manage {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  column-gap: 14px;
-  row-gap: 4px;
-  margin-top: 6px;
-}
-
-.il-comment__action {
-  color: var(--il-muted);
-  font-size: 13px;
-  text-decoration: none;
-}
-
-.il-comment__action:hover {
-  color: var(--il-moss);
-  text-decoration: underline;
-}
-
-.il-comment__action--danger,
-.il-comment__action--danger:hover {
-  color: #a2402c;
-}
-
-/* Сколько ещё можно править: тихо, рядом с кнопками */
-.il-comment__timer {
-  color: var(--il-muted);
-  white-space: nowrap;
-  cursor: help;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
-.il-comment__confirm {
-  display: inline-flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  color: var(--il-ink);
-  font-size: 13px;
-}
-
-/* Отправляется: показан сразу, сервер ещё не подтвердил. */
-.il-comment__inner[data-pending] {
-  opacity: 0.6;
+  gap: 6px 20px;
+  min-height: 30px;
 }
 
 .il-comment__likes {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  color: var(--il-muted);
-  font-size: 13px;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
+  gap: 6px;
+  padding: 2px;
 }
 
 .il-comment__likes svg {
-  width: 15px;
-  height: 15px;
+  display: block;
   fill: var(--il-like);
 }
 
@@ -845,23 +832,114 @@ a.il-author:hover .il-author__name,
   fill: var(--il-like-mine);
 }
 
-/* Ответы — с отступом и линией слева, как ветка разговора */
+.il-comment__likes span {
+  font-size: 14px;
+  font-weight: 500;
+  opacity: 0.4;
+}
+
+.il-comment__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.il-comment__icon svg {
+  display: block;
+}
+
+.il-comment__icon:hover {
+  opacity: 0.75;
+}
+
+.il-comment__icon:focus-visible,
+.il-comment__toggle:focus-visible,
+.il-comment__link:focus-visible,
+.il-comment__author:focus-visible,
+.il-comment__image:focus-visible,
+.il-comment__text a:focus-visible {
+  outline: 2px solid var(--il-link);
+  outline-offset: 2px;
+}
+
+/* Сколько ещё можно править — как таймер у комментариев сайта. */
+.il-comment__timer {
+  color: #000;
+  font-size: 12px;
+  opacity: 0.5;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  cursor: help;
+}
+
+.il-comment__confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  color: #000;
+  font-size: 14px;
+}
+
+.il-comment__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--il-link);
+  font: inherit;
+  cursor: pointer;
+}
+
+.il-comment__link--danger {
+  color: #c25b48;
+}
+
+/* Отправляется: показан сразу, сервер ещё не подтвердил. */
+.il-comment__inner[data-pending] {
+  opacity: 0.6;
+}
+
+/* Ответы: свёрнуты за «Показать ответы (N)», с отступом и уменьшенным аватаром. */
+.il-comment__thread {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  margin-top: 10px;
+  padding-left: 56px;
+}
+
+.il-comment__toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--il-link);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
 .il-replies {
   display: grid;
-  gap: 14px;
-  margin: 12px 0 0 42px;
-  padding-left: 12px;
-  border-left: 2px solid #e8dfca;
+  gap: 24px;
+  width: 100%;
 }
 
 .il-comment--reply .il-comment__inner {
-  grid-template-columns: 26px minmax(0, 1fr);
-  gap: 8px;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 0 12px;
 }
 
-.il-comment--reply .il-comment__avatar .il-avatar {
-  width: 26px;
-  height: 26px;
+.il-comment--reply .il-comment__avatar {
+  width: 30px;
+  height: 30px;
+}
+
+.il-comment--reply .il-avatar--initial {
   font-size: 11px;
 }
 
@@ -889,7 +967,9 @@ a.il-author:hover .il-author__name,
 
 .il-comments__earlier {
   display: block;
-  margin: 0 auto 16px;
+  margin: 0 0 24px;
+  color: var(--il-link);
+  font-size: 15px;
 }
 
 .il-comments__state {
@@ -906,21 +986,19 @@ a.il-author:hover .il-author__name,
 }
 
 .il-comment--skeleton .il-avatar {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
 }
 
-/* «Ответ для …» над полем */
+/* «Ответ для …» / «Правка комментария» над формой */
 .il-reply-banner {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 6px 6px 12px;
-  border-left: 3px solid var(--il-moss);
-  border-radius: 0 8px 8px 0;
-  background: #f3ecdd;
-  color: var(--il-ink);
+  gap: 10px;
+  padding: 8px 8px 8px 14px;
+  border-radius: 8px;
+  background-color: #f0e5d2;
+  color: #000;
   font-size: 14px;
 }
 
@@ -932,16 +1010,12 @@ a.il-author:hover .il-author__name,
   text-overflow: ellipsis;
 }
 
-.il-reply-banner--edit {
-  border-left-color: var(--il-amber);
-}
-
 .il-reply-banner__timer {
   flex: none;
-  cursor: help;
-  color: var(--il-muted);
-  font-size: 13px;
+  font-size: 12px;
+  opacity: 0.5;
   font-variant-numeric: tabular-nums;
+  cursor: help;
 }
 
 .il-reply-banner__cancel {
@@ -954,12 +1028,12 @@ a.il-author:hover .il-author__name,
   border: 0;
   border-radius: 50%;
   background: none;
-  color: var(--il-ink);
+  color: #000;
   cursor: pointer;
 }
 
 .il-reply-banner__cancel:hover {
-  background: #e8dfca;
+  background: #e6d8bf;
 }
 
 .il-reply-banner__cancel svg {
@@ -970,30 +1044,71 @@ a.il-author:hover .il-author__name,
 }
 
 .il-reply-banner__cancel:focus-visible {
-  outline: 2px solid var(--il-amber);
+  outline: 2px solid var(--il-link);
   outline-offset: 1px;
 }
 
-/* Редактор комментария */
+/* Поле — как у комментариев сайта: серая рамка, скругление 10 px. */
 .il-editor {
-  border: 1px solid #d9cfb8;
-  border-radius: var(--il-shape);
-  background: #fff;
+  position: relative;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  background: transparent;
 }
 
 .il-editor:focus-within {
-  border-color: var(--il-amber);
-  box-shadow: 0 0 0 1px var(--il-amber);
+  border-color: #e3b88f;
 }
 
-.il-editor__toolbar,
+.il-editor__content {
+  min-height: 40px;
+  max-height: 200px;
+  overflow-y: auto;
+  outline: none;
+  color: #000;
+  font-size: 15px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.il-editor__content p {
+  margin: 0;
+}
+
+.il-editor__content p + p {
+  margin-top: 0.5em;
+}
+
+/* Ссылки и упоминания — синие и подчёркнутые, как на сайте. */
+.il-editor__content a {
+  color: var(--il-link);
+  text-decoration: underline;
+}
+
+.il-editor__content p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  color: #6c7a89;
+  pointer-events: none;
+}
+
+/* Форматирование — всплывает над выделенным текстом. */
+.il-bubble {
+  z-index: 20;
+  padding: 4px;
+  border: 1px solid #e3e3e3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.14);
+}
+
+.il-bubble__tools,
 .il-linkbar {
   display: flex;
   align-items: center;
   gap: 2px;
-  min-height: 41px;
-  padding: 4px 6px;
-  border-bottom: 1px solid #efe6d2;
 }
 
 .il-tool {
@@ -1005,29 +1120,20 @@ a.il-author:hover .il-author__name,
   border: 0;
   border-radius: 6px;
   background: none;
-  color: var(--il-ink);
+  color: #000;
   cursor: pointer;
 }
 
 .il-tool:hover {
-  background: #f5efe2;
+  background: #f1eee6;
 }
 
 .il-tool[aria-pressed="true"] {
-  background: #efe6d2;
-}
-
-.il-tool:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-}
-
-.il-tool:disabled:hover {
-  background: none;
+  background: #eeebde;
 }
 
 .il-tool:focus-visible {
-  outline: 2px solid var(--il-amber);
+  outline: 2px solid var(--il-link);
   outline-offset: -2px;
 }
 
@@ -1059,15 +1165,9 @@ a.il-author:hover .il-author__name,
   text-underline-offset: 3px;
 }
 
-.il-tool__sep {
-  width: 1px;
-  height: 20px;
-  margin: 0 6px;
-  background: #e8dfca;
-}
-
 .il-linkbar {
   gap: 6px;
+  width: 250px;
 }
 
 .il-linkbar__input {
@@ -1075,21 +1175,21 @@ a.il-author:hover .il-author__name,
   min-width: 0;
   height: 32px;
   padding: 0 8px;
-  border: 1px solid #e8dfca;
+  border: 1px solid #ccc;
   border-radius: 6px;
   background: #fff;
-  color: var(--il-ink);
+  color: #000;
   font: inherit;
   font-size: 14px;
 }
 
 .il-linkbar__input:focus-visible {
-  outline: 2px solid var(--il-amber);
+  outline: 2px solid var(--il-link);
   outline-offset: -1px;
 }
 
 .il-linkbar__input[aria-invalid] {
-  border-color: #c0533d;
+  border-color: #c25b48;
 }
 
 .il-linkbar__action {
@@ -1098,60 +1198,18 @@ a.il-author:hover .il-author__name,
   padding: 0 10px;
   border: 0;
   border-radius: 6px;
-  background: var(--il-ink);
-  color: #fdf8ef;
+  background: var(--il-link);
+  color: #fff;
   font: inherit;
   font-size: 14px;
-  font-weight: 700;
   cursor: pointer;
 }
 
 .il-linkbar__action--quiet {
   background: none;
-  color: var(--il-ink);
-  font-weight: 400;
+  color: var(--il-link);
   text-decoration: underline;
   text-underline-offset: 3px;
-}
-
-.il-editor__content {
-  min-height: 72px;
-  max-height: 200px;
-  padding: 10px 12px;
-  overflow-y: auto;
-  outline: none;
-  font-size: 15px;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.il-editor__content p {
-  margin: 0;
-}
-
-.il-editor__content p + p {
-  margin-top: 0.5em;
-}
-
-.il-editor__content a {
-  color: var(--il-moss);
-  text-decoration: underline;
-  text-underline-offset: 2px;
-}
-
-.il-editor__content p.is-editor-empty:first-child::before {
-  content: attr(data-placeholder);
-  float: left;
-  height: 0;
-  color: var(--il-muted);
-  pointer-events: none;
-}
-
-/* Упоминание в тексте — ссылка на профиль, но выглядит как имя, а не как адрес. */
-.il-editor__content a[href^="/profile/"] {
-  color: var(--il-moss);
-  font-weight: 700;
-  text-decoration: none;
 }
 
 /* Подсказки упоминаний */
@@ -1227,81 +1285,133 @@ a.il-author:hover .il-author__name,
   font-size: 13px;
 }
 
-/* Прикреплённые картинки — до трёх в ряд */
+/*
+ * Строка формы — как у комментариев сайта: «+» для картинок, поле, круглая
+ * кнопка отправки; прикреплённые картинки — над полем.
+ */
+.il-compose {
+  display: grid;
+  grid-template-areas:
+    ". alist ."
+    "attach area submit";
+  grid-template-columns: 36px minmax(0, 1fr) 36px;
+  gap: 0 8px;
+  align-items: start;
+}
+
+.il-compose__area {
+  grid-area: area;
+  min-width: 0;
+}
+
+.il-compose__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.il-compose__attach {
+  grid-area: attach;
+  background-color: #eeebde;
+  color: #000;
+}
+
+.il-compose__submit {
+  grid-area: submit;
+  background-color: var(--il-link);
+}
+
+.il-compose__btn:disabled {
+  cursor: not-allowed;
+}
+
+.il-compose__attach:disabled {
+  opacity: 0.5;
+}
+
+.il-compose__submit:disabled {
+  opacity: 0.6;
+  background-color: #b5b5b5;
+}
+
+.il-compose__btn:focus-visible {
+  outline: 2px solid var(--il-link);
+  outline-offset: 2px;
+}
+
 .il-attachments {
+  grid-area: alist;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin: 0;
+  gap: 6px;
+  margin: 0 0 10px;
   padding: 0;
   list-style: none;
 }
 
 .il-attachment {
   position: relative;
-  width: 72px;
-  height: 72px;
-  overflow: hidden;
-  border-radius: var(--il-shape);
-  background: var(--il-placeholder);
+  display: flex;
 }
 
 .il-attachment__img {
   display: block;
-  width: 100%;
-  height: 100%;
+  width: auto;
+  max-width: 120px;
+  height: 60px;
+  border-radius: 6px 20px 6px 6px;
+  background-color: #e3e3e3;
   object-fit: cover;
 }
 
 .il-attachment__remove {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: -4px;
+  right: -4px;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   padding: 0;
-  border: 0;
+  border: 1px solid #fff;
   border-radius: 50%;
-  background: rgb(253 248 239 / 0.92);
-  color: var(--il-ink);
+  background-color: #d78778;
+  color: #fff;
   cursor: pointer;
 }
 
 .il-attachment__remove svg {
+  width: 12px;
+  height: 12px;
   fill: none;
   stroke: currentColor;
-  stroke-width: 2.4;
+  stroke-width: 2.6;
   stroke-linecap: round;
 }
 
 .il-attachment__remove:focus-visible {
-  outline: 2px solid var(--il-amber);
+  outline: 2px solid var(--il-link);
   outline-offset: 1px;
-}
-
-.il-comment-form__footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .il-comment-form__error {
   margin: 0;
+  padding-left: 44px;
   color: #a2402c;
   font-size: 13px;
   line-height: 1.35;
 }
 
-/* Пока грузится бандл редактора — пустое место ровно под поле, без скачка. */
+/* Пока грузится бандл редактора — пустое место ровно под строку формы, без скачка. */
 .il-comment-form--loading {
-  min-height: 208px;
-}
-
-.il-comment-form .il-button {
-  flex: none;
+  min-height: 102px;
 }
 
 .il-button:disabled {
@@ -1364,7 +1474,7 @@ a.il-author:focus-visible,
   .il-comments,
   .il-comment-form,
   .il-comments__guest {
-    padding-inline: 16px;
+    margin-inline: 16px;
   }
   .il-comments {
     overflow: visible;
@@ -1387,6 +1497,136 @@ a.il-author:focus-visible,
   .il-close:hover {
     background: #fdf8ef;
   }
+}
+
+/* Окно жалобы — как окно жалобы у комментариев сайта: рамка, шапка «Alterlit». */
+.il-report {
+  width: min(560px, 100vw - 32px);
+  max-width: none;
+  padding: 0;
+  border: 3px solid #000;
+  border-radius: 0;
+  background: #fff;
+  color: #000;
+  font-family: "PT Serif", Georgia, serif;
+}
+
+.il-report::backdrop {
+  background: rgb(253 248 239 / 0.75);
+  backdrop-filter: blur(6px);
+}
+
+.il-report__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 6px 6px 12px;
+  border-bottom: 3px solid #000;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.il-report__close {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #000;
+  cursor: pointer;
+}
+
+.il-report__close svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+}
+
+.il-report__body {
+  display: grid;
+  gap: 20px;
+  padding: 28px 30px 30px;
+}
+
+.il-report__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  text-align: left;
+  color: #000;
+}
+
+.il-report__text {
+  margin: 0;
+  font-size: 16px;
+}
+
+.il-report__field {
+  display: grid;
+  gap: 4px;
+}
+
+/* Поля — «заливка с линией снизу», как у MUI-полей на сайте. */
+.il-report__input {
+  width: 100%;
+  padding: 16px 14px;
+  border: 0;
+  border-bottom: 1px solid #6b6b6b;
+  border-radius: 4px 4px 0 0;
+  background: #ece7e1;
+  color: #000;
+  font: inherit;
+  font-size: 16px;
+}
+
+.il-report__textarea {
+  min-height: 56px;
+  resize: vertical;
+}
+
+.il-report__input::placeholder {
+  color: #5f5f5f;
+}
+
+.il-report__input:focus-visible {
+  outline: none;
+  border-bottom: 2px solid #1976d2;
+}
+
+.il-report__input[aria-invalid] {
+  border-bottom: 2px solid #c25b48;
+}
+
+.il-report__error {
+  margin: 0;
+  color: #a2402c;
+  font-size: 13px;
+}
+
+.il-report__submit {
+  height: 44px;
+  border: 0;
+  border-radius: 4px;
+  background: #1976d2;
+  color: #fff;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.il-report__submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.il-report__submit:focus-visible,
+.il-report__close:focus-visible {
+  outline: 2px solid #1976d2;
+  outline-offset: 2px;
 }
 
 /* Окно-предупреждение */
