@@ -77,6 +77,38 @@ export const commentsApi = baseApi.injectEndpoints({
       },
     }),
 
+    /**
+     * Лайк комментария: POST /like/session/comment/<id>/ — та же ручка, что у картинок.
+     * Переключает лайк и отвечает { msg: "ok" } без итога, поэтому кэш меняем сразу
+     * и откатываем при ошибке.
+     */
+    toggleCommentLike: build.mutation<void, { imageId: number; commentId: number; userId: number }>({
+      query: ({ commentId }) => ({ url: `like/session/comment/${commentId}/`, method: "POST" }),
+      async onQueryStarted({ imageId, commentId, userId }, { dispatch, queryFulfilled }) {
+        const patch = dispatch(
+          commentsApi.util.updateQueryData("getComments", imageId, (draft) => {
+            const toggle = (likes: number[]) => {
+              const index = likes.indexOf(userId);
+              if (index === -1) likes.push(userId);
+              else likes.splice(index, 1);
+            };
+            for (const page of draft.pages) {
+              for (const comment of page.comments) {
+                if (comment.id === commentId) return toggle(comment.likes);
+                const reply = comment.reply.find((item) => item.id === commentId);
+                if (reply) return toggle(reply.likes);
+              }
+            }
+          }),
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patch.undo();
+        }
+      },
+    }),
+
     /** DELETE /comment/<id>/session/ → { msg: "ok" }. В сокет приходит remove_comment. */
     deleteComment: build.mutation<void, number>({
       query: (commentId) => ({ url: `comment/${commentId}/session/`, method: "DELETE" }),
@@ -84,4 +116,4 @@ export const commentsApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetCommentsInfiniteQuery } = commentsApi;
+export const { useGetCommentsInfiniteQuery, useToggleCommentLikeMutation } = commentsApi;

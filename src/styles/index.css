@@ -682,15 +682,18 @@ a.il-author:hover .il-author__name,
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr);
   gap: 0 16px;
-  /* Подсветка, как у сайта для выбранного комментария (на него отвечают или его правят). */
+  /*
+   * Подсветка, как у сайта для выбранного комментария (на него отвечают или его правят).
+   * Через box-shadow, а не outline: CSS сайта на :active снимает outline у всех
+   * предков, и при каждом клике по комментарию мелькала серая рамка.
+   */
   border-radius: 10px;
-  transition: background-color 0.2s, outline-color 0.2s;
-  outline: 5px solid transparent;
+  transition: background-color 0.2s, box-shadow 0.2s;
 }
 
 .il-comment__inner[data-active] {
   background-color: #ffecca;
-  outline-color: #ffecca;
+  box-shadow: 0 0 0 5px #ffecca;
 }
 
 .il-comment__avatar {
@@ -821,6 +824,38 @@ a.il-author:hover .il-author__name,
   align-items: center;
   gap: 6px;
   padding: 2px;
+  border: 0;
+  background: none;
+  color: #000;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.il-comment__likes svg {
+  transition: fill 0.2s ease;
+  transform-origin: 50% 60%;
+}
+
+.il-comment__likes:hover svg {
+  fill: #cfc6a6;
+}
+
+.il-comment__likes[data-mine]:hover svg {
+  fill: #c9725f;
+}
+
+.il-comment__likes[data-pulse="in"] svg {
+  animation: il-heart-in 0.42s cubic-bezier(0.3, 0, 0.3, 1.4);
+}
+
+.il-comment__likes[data-pulse="out"] svg {
+  animation: il-heart-out 0.24s ease-out;
+}
+
+.il-comment__likes:focus-visible {
+  outline: 2px solid var(--il-link);
+  outline-offset: 2px;
 }
 
 .il-comment__likes svg {
@@ -1703,7 +1738,8 @@ a.il-author:focus-visible,
   }
   .il-dialog[open],
   .il-notice[open],
-  .il-like[data-pulse] .il-stat__icon {
+  .il-like[data-pulse] .il-stat__icon,
+  .il-comment__likes[data-pulse] svg {
     animation: none;
   }
   .il-like .il-stat__icon {

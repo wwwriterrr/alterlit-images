@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, type RefObject } from "react";
-import { useGetCommentsInfiniteQuery } from "../../api/commentsApi";
+import { useGetCommentsInfiniteQuery, useToggleCommentLikeMutation } from "../../api/commentsApi";
 import type { ApiReply, ApiUser } from "../../types/api";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { editStarted, noticeShown, replyCancelled, reportStarted, type ReplyTarget } from "../viewer/viewerSlice";
@@ -26,6 +26,17 @@ export function CommentsList({ imageId, viewer, onReply, scrollRef }: Props) {
   const replyTo = useAppSelector((state) => state.viewer.replyTo);
   const editingId = useAppSelector((state) => state.viewer.editing?.commentId ?? null);
   const onCancelReply = () => dispatch(replyCancelled());
+  const [toggleCommentLike] = useToggleCommentLikeMutation();
+  const onLike = (commentId: number): boolean => {
+    if (!viewer) {
+      dispatch(noticeShown("Ставить реакции могут только авторизованные пользователи. Войдите на сайт, чтобы отметить комментарий."));
+      return false;
+    }
+    toggleCommentLike({ imageId, commentId, userId: viewer.id })
+      .unwrap()
+      .catch(() => dispatch(noticeShown("Не удалось сохранить реакцию. Проверьте соединение и попробуйте ещё раз.")));
+    return true;
+  };
   const rightsFor = (comment: ApiReply) => commentRights(comment, viewer);
   const onEdit = (comment: ApiReply, deadline: number | null) =>
     dispatch(editStarted({ commentId: comment.id, html: comment.content ?? "", images: comment.images, deadline }));
@@ -161,6 +172,7 @@ export function CommentsList({ imageId, viewer, onReply, scrollRef }: Props) {
             onDelete={onDelete}
             onEdit={onEdit}
             onReport={(id) => dispatch(reportStarted(id))}
+            onLike={onLike}
           />
         ))}
       </ul>

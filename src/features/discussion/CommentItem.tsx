@@ -30,6 +30,8 @@ interface ItemProps {
   onEdit: (comment: ApiReply, deadline: number | null) => void;
   /** Пожаловаться — доступно и гостям; на свои комментарии кнопки нет. */
   onReport: (commentId: number) => void;
+  /** Переключить лайк; true — переключается (гостю вместо этого покажут окно). */
+  onLike: (commentId: number) => boolean;
 }
 
 export function CommentItem({ comment, replyTo, ...rest }: ItemProps) {
@@ -78,6 +80,7 @@ function CommentBody({
   onDelete,
   onEdit,
   onReport,
+  onLike,
 }: Omit<ItemProps, "comment"> & {
   comment: ApiReply;
   /** id верхнего комментария ветки — на него и уходит ответ. */
@@ -91,6 +94,7 @@ function CommentBody({
   const canDelete = rights.canDelete && !expired;
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [pulse, setPulse] = useState<"in" | "out" | null>(null);
   const name = authorName(comment.author);
   const html = useMemo(() => (comment.content ? sanitizeComment(comment.content) : ""), [comment.content]);
   const liked = viewerId !== null && comment.likes.includes(viewerId);
@@ -159,16 +163,23 @@ function CommentBody({
               </span>
             ) : (
               <>
-                <span
+                <button
+                  type="button"
                   className="il-comment__likes"
                   data-mine={liked || undefined}
-                  aria-label={`${comment.likes.length} ${plural(comment.likes.length, ["лайк", "лайка", "лайков"])}`}
+                  data-pulse={pulse ?? undefined}
+                  aria-pressed={liked}
+                  aria-label={`Нравится: ${comment.likes.length} ${plural(comment.likes.length, ["лайк", "лайка", "лайков"])}`}
+                  onClick={() => {
+                    if (onLike(comment.id)) setPulse(liked ? "out" : "in");
+                  }}
+                  onAnimationEnd={() => setPulse(null)}
                 >
                   <svg viewBox="0 0 40 40" width="26" height="26" aria-hidden="true">
                     <path d={HEART_PATH} />
                   </svg>
                   {comment.likes.length > 0 && <span>{comment.likes.length}</span>}
-                </span>
+                </button>
                 {onReply &&
                   (replyingHere ? (
                     <IconButton title="Отменить ответ" onClick={onCancelReply}>

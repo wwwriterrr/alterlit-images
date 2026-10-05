@@ -148,7 +148,7 @@ docs/backend-api.md    справка по API и моделям бэкенда
 |---|---|
 | `GET /api/v1/users/session/self/` | текущий пользователь (гость — 403) |
 | `GET /api/v1/images/session/?slug=&last_id=` | лента картинок |
-| `POST /api/v1/like/session/postimages/<id>/` | переключить лайк |
+| `POST /api/v1/like/session/<postimages\|comment>/<id>/` | переключить лайк картинки / комментария |
 | `GET /api/v1/session/autocomplete/users/?q=` | автодополнение упоминаний |
 | `GET /api/v1/comments/postimages/<id>/session/` | комментарии картинки |
 | `POST` там же | новый комментарий (multipart) |
